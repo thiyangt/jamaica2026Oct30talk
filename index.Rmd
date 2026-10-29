@@ -1,0 +1,1247 @@
+---
+title: "Data Volume vs Temporal Depth: How Can We
+Prevent Temporal Information Loss?"
+subtitle: "Why R? 2021"
+author: "Thiyanga S. Talagala"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: 
+      - default
+      - default-fonts
+      - duke-blue
+      - hygge-duke
+      - libs/cc-fonts.css
+      - libs/figure-captions.css
+      - xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: '16:9'
+---
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_accent(
+  base_color = "#081d58",
+  text_bold_color = "#ce1256",
+  title_slide_text_color = "#edf8b1",
+#  header_font_google = google_font("Josefin Sans"),
+  base_font_size = "25px",
+  text_font_size = "1.0rem",
+  code_font_size = "1rem"
+ #text_font_google   = google_font("Montserrat", "300", "300i")
+ # code_font_google   = google_font("Fira Mono")
+)
+```
+
+
+```{r setup, include=FALSE}
+library(knitr)
+options(htmltools.dir.version = FALSE)
+read_chunk("src/main.R")
+library(ggplot2)
+library(patchwork)
+library(reshape2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+library(RColorBrewer)
+library(dplyr)
+library(forecast)
+library(tidyr)
+library(rlang)
+library(tidyverse)
+library(tsfeatures)
+```
+class: center, middle
+
+background-image: url(img/shopping.jpg)
+background-size: contain
+class: center, top, inverse
+
+---
+background-image: url(img/bananas.jpg)
+class: center, top, inverse
+---
+
+## Sales data
+
+.pull-left[
+
+Data from June, 2011 to November, 2021
+
+```{r, comment=NA, echo=FALSE, message=FALSE, warning=FALSE, size="tiny"}
+library(Mcomp)
+library(tsibble)
+library(lubridate)
+library(tidyverse)
+set.seed(1)
+bananas <- M3$N2012$x
+mth <- make_date("2011") + months(5:130)
+mth2 <- make_date("2021") + months(11)
+bananas <- tibble(
+  Time = yearmonth(mth), 
+  Sales = bananas)
+bananas <- as_tsibble(bananas)
+bananas
+```
+
+
+]
+
+.pull-right[
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+library(fable)
+bananas %>% 
+  autoplot(Sales) 
+```
+
+]
+
+
+---
+
+
+
+## Sales data
+
+.pull-left[
+
+Data from June, 2011 to November, 2021
+
+```{r, comment=NA, echo=FALSE, message=FALSE, warning=FALSE, size="tiny"}
+library(Mcomp)
+library(tsibble)
+library(lubridate)
+library(tidyverse)
+set.seed(1)
+bananas <- M3$N2012$x
+mth <- make_date("2011") + months(5:130)
+mth2 <- make_date("2021") + months(11)
+bananas <- tibble(
+  Time = yearmonth(mth), 
+  Sales = bananas)
+bananas <- as_tsibble(bananas)
+bananas
+```
+
+
+]
+
+.pull-right[
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+library(fable)
+bananas %>% 
+  autoplot(Sales) + geom_vline(xintercept = mth2, lwd=2, col="#e7298a")
+```
+
+]
+
+
+---
+
+## Sales data
+
+.pull-left[
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+library(fable)
+bananas %>% 
+  autoplot(Sales) + geom_vline(xintercept = mth2, lwd=2, col="#e7298a")
+```
+
+]
+
+--
+.pull-right[
+
+- **How much** will you sell over the next 12 months?
+
+- **How much** do we need to produce and **when**?
+
+
+
+]
+
+
+---
+
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#666666", "#666666", "#666666","#666666", "#666666", "#666666", "#666666")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+
+---
+
+
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Communication", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Communication", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#666666", "#666666","#666666", "#666666", "#666666", "#666666")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Communication", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Communication", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "#666666","#666666", "#666666", "#666666", "#666666")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Communication", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#666666", "#666666")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#666666")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+
+### What might happen during a typical model building process?
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#984ea3")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+background-image: url(img/supermarket.jpg)
+class: center, top, inverse
+
+
+---
+background-image: url(img/supermarket.jpg)
+class: center, top, inverse
+
+
+.full-width[.content-box-blue[Multiple products]]
+
+---
+
+background-image: url(img/globe.jpg)
+class: center, top, inverse
+
+
+.full-width[.content-box-blue[Multiple products across many warehouses]]
+
+---
+
+
+## Number of series: 1
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+library(tidyverse)
+library(coronavirus)
+coronavirus <- coronavirus %>% mutate(cases = replace(cases, which(cases<0), NA))
+coronavirus <- coronavirus %>% mutate(cases = replace(cases, which(cases>800000), 800))
+#confirmed <- coronavirus %>% filter(type == "confirmed")
+confirmed <- coronavirus %>% 
+  filter(type == "confirmed") %>%
+  group_by(country, date) %>%
+  summarise(cases = sum(cases)) 
+```
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line(colour=NA) +  theme(legend.position = "none")
+p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+## Number of series: 2
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line(colour=NA) +  theme(legend.position = "none")
+p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + geom_line(data = subset(confirmed,  country == "China"),color = "#7570b3") + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+
+---
+
+## Number of series: 3
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line(colour=NA) +  theme(legend.position = "none")
+p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + geom_line(data = subset(confirmed,  country == "China"),color = "#7570b3") + geom_line(data = subset(confirmed,  country == "Australia"),color = "#1b9e77") +
+  theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+
+
+## Number of series: 10
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line(colour=NA) +  theme(legend.position = "none")
+p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + geom_line(data = subset(confirmed,  country == "China"),color = "#7570b3") + geom_line(data = subset(confirmed,  country == "Australia"),color = "#1b9e77") +
+  geom_line(data = subset(confirmed,  country == "Sri Lanka"),color = "#ff7f00") +
+  geom_line(data = subset(confirmed,  country == "Ireland"),color = "#6a3d9a") +
+  geom_line(data = subset(confirmed,  country == "Colombia"),color = "#1f78b4") +
+  geom_line(data = subset(confirmed,  country == "Russia"),color = "#b2df8a") +
+  geom_line(data = subset(confirmed,  country == "Mexico"),color = "#fdbf6f") +
+  geom_line(data = subset(confirmed,  country == "Canada"),color = "#fb9a99") +
+  geom_line(data = subset(confirmed,  country == "Poland"),color = "#cab2d6") +
+  theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+
+
+## Number of series: More than 100
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases, colour=country)) + geom_line() +  theme(legend.position = "none")
+p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+class: center, middle, inverse
+
+#How to forecast large number of univariate time series?
+
+---
+
+## Aggregate selection rule
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line() +  theme(legend.position = "none")
+p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+
+## Individual model building
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases, colour=country)) + geom_line() +  theme(legend.position = "none")
+p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+---
+
+## Individual model building
+
+.pull-left[
+
+```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
+library(plotly)
+p <- ggplot(confirmed, aes(x=date, y=cases, colour=country)) + geom_line() +  theme(legend.position = "none")
+p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
+```
+
+
+]
+
+
+
+--
+
+.pull-right[
+
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#984ea3")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+
+]
+
+
+--
+.full-width[.content-box-green[.justify-center[How to choose the right forecasting techniques?]]]
+
+---
+
+
+class: inverse
+background-image: url(img/rice1.png)
+background-size: contain
+
+
+
+
+---
+
+class: inverse
+background-image: url(img/rice2.png)
+background-size: contain
+
+---
+
+#### Time series
+
+```{r, comment=NA,fig.width=15, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+model <- c("Random walk with drift", "NAIVE", "Random walk", "NAIVE", "ETS", "SARIMA")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 3)
+```
+
+---
+
+
+
+```{r, comment=NA, echo=FALSE, fig.width=15}
+library(ggplot2)
+df <- data.frame(v1=factor(c("Data wrangling", 
+  "Data Visualization", 
+                                "Data Visualization", 
+                                "Data Preprocessing",
+                                "Data Visualization", 
+  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
+    
+                                
+                                ), levels=c("Data wrangling",
+                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
+
+ggplot(df, aes(y=v2, x=v3)) + 
+  geom_tile(aes(fill = v1)) + 
+  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#984ea3")) + 
+  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
+  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+---
+
+
+####  Time series and their best forecasting method
+
+```{r, comment=NA, message=FALSE, fig.width=15, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+model <- c("Random walk with drift", "NAIVE", "Random walk with drift", "NAIVE", "ETS", "SARIMA")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i], model[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 3)
+```
+
+
+
+---
+
+
+
+background-image: url(img/tukey.jpeg)
+background-size: 200px
+background-position: 100% 6%
+
+# Time series features
+
+- **Cognostics**: **Co**mputer-aided dia**gnostics** (John W. Tukey, 1985)
+
+- Characteristics of time series
+
+- Summary measures of time series
+
+
+**Basic Principle**
+
+- Transform a given time series $y=\{y_1, y_2, \cdots, y_n\}$ into a feature vector $F = (f_1(y), f_2(y), \cdots, f_p(y))'$. 
+
+
+---
+
+.pull-left[
+#### Time-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+model <- c("Random walk with drift", "NAIVE", "Random walk with drift", "NAIVE", "ETS", "SARIMA")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i], model[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+]
+
+--
+
+.pull-right[
+
+#### Time series features
+
+- Strength of trend
+
+
+- Strength of seasonality
+
+
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+df <- tsfeatures(six_series, c("stl_features")) %>%
+  select(trend, seasonal_strength) %>%
+  rename(seasonality = seasonal_strength) %>%
+  replace_na(list(seasonality = 0))
+df$id <- names(six_series)
+
+df
+
+```
+
+]
+
+---
+
+.pull-left[
+
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+
+]
+
+.pull-right[
+
+
+$$y_t = T_t + S_t + R_t$$
+
+$$F_T = max \left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)} \right)$$
+
+$$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$
+
+]
+
+
+---
+
+.pull-left[
+#### Time-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+]
+
+--
+
+.pull-right[
+
+#### Feature-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+df <- tsfeatures(six_series, c("stl_features")) %>%
+  select(trend, seasonal_strength) %>%
+  rename(seasonality = seasonal_strength) %>%
+  replace_na(list(seasonality = 0))
+df$id <- names(six_series)
+ggplot(df, aes(x = trend, y = seasonality)) +
+  geom_point(size = 5, color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")) +
+  xlim(0, 1) + ylim(0, 1) +
+  xlab("Strength of trend") + 
+  ylab("Strength of seasonality") + 
+  coord_fixed() +
+  geom_text_repel(
+    aes(label = id),
+    colour = "black",
+    size = 5,
+    box.padding = unit(0.5, "lines")
+  ) +
+  theme(legend.position = "none")
+```
+
+]
+
+---
+
+
+## Examples of time series features
+
+.pull-left[
+
+- length
+
+- strength of trend
+
+- strength of seasonality
+
+- lag-1 autocorrelation
+
+- spectral entropy
+
+- proportion of zeros
+
+- spikiness
+
+]
+
+.pull-right[
+
+- curvature
+
+- linearity
+
+- stability
+
+- number of peaks
+
+- parameter estimates of Holt-Winters' additive method
+
+- unit root test statistics
+
+]
+---
+
+
+class: center, middle
+
+# Feature-based time series forecasting
+
+
+---
+
+class: inverse, center, middle
+background-image: url(img/f1.png)
+background-size: contain
+
+
+---
+class: inverse, center, middle
+background-image: url(img/f2.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f3.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f4.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f5.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f6.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f7.png)
+background-size: contain
+
+
+---
+class: inverse, center, middle
+background-image: url(img/f8.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f9.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f10.png)
+background-size: contain
+
+
+---
+class: inverse, center, middle
+background-image: url(img/f11.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f12.png)
+background-size: contain
+
+---
+class: inverse, center, middle
+background-image: url(img/f13.png)
+background-size: contain
+
+
+---
+
+
+
+### FFORMS: **F**eature-based **FOR**ecast **M**odel **S**election
+
+
+.pull-left[
+
+seer (magic ball)
+
+```{r   out.width = "50%", echo = FALSE, fig.cap=''}
+knitr::include_graphics("img/seer.png")
+```
+
+
+```{r, comment=NA, eval=FALSE}
+install.packages("seer")
+#library(devtools)
+#install_github("thiyangt/seer")
+library(seer)
+```
+
+]
+
+--
+
+.pull-right[
+
+Acropolis Museum, Athens, Greece
+
+```{r   out.width = "60%", echo = FALSE, fig.cap=''}
+knitr::include_graphics("img/greece.JPG")
+```
+
+
+
+]
+
+
+---
+## seer package
+
+**Training set**
+
+```{r, comment=NA}
+library(Mcomp)
+data(M1)
+yearly_m1 <- subset(M1, "yearly")
+yearly_m1
+```
+
+**Test set**
+
+```{r, comment=NA}
+data(M3)
+yearly_m3 <- subset(M3, "yearly")
+m3y <- M3[1:2]
+m3y
+```
+
+
+---
+## seer package: `cal_features`
+
+```{r, echo=FALSE, warning=F, message=FALSE, comment=NA}
+library(seer)
+features_m1 <- cal_features(yearly_m1, database="M1", h=6, highfreq = FALSE)
+features_m1
+```
+
+
+
+---
+## seer package: `fcast_accuracy`
+
+
+```{r, comment=NA, message=FALSE}
+accuracy_m1 <- fcast_accuracy(tslist=yearly_m1, 
+                              models= c("arima","ets","rw","rwd", "theta", "nn"), 
+                              database ="M1", cal_MASE, h=6, length_out = 1, fcast_save = TRUE)
+accuracy_m1
+```
+
+
+---
+## seer package: `prepare_trainingset`
+
+```{r, comment=NA, message=FALSE}
+prep_tset <- prepare_trainingset(accuracy_set = accuracy_m1, feature_set = features_m1)
+prep_tset
+```
+
+---
+
+## seer package: `prepare_trainingset`
+
+```{r, comment=NA, message=FALSE}
+prep_tset$trainingset
+```
+
+---
+## seer package
+
+```{r, comment=NA, cache=TRUE}
+M3yearly_features <- seer::cal_features(yearly_m3, database="M3", h=6, highfreq = FALSE)
+head(M3yearly_features)
+```
+
+
+---
+
+
+
+
+
+---
+background-image:url(img/m4results.png)
+background-size: contain
+
+
+
+---
+class: inverse
+background-image: url(img/forest.jpg)
+background-size: cover
+
+## Random forest
+
+---
+class: center, inverse, middle
+background-image: url(img/forest.jpg)
+background-size: cover
+
+# Can we trust ML-algorithms if we don't know how it works?
+
+---
+class: inverse
+background-image: url(img/forest.jpg)
+background-size: cover
+
+## Peeking inside FFORMS Random forest
+
+.full-width[.content-box-yellow[.black[
+
+- **Which** features are the most important? 
+
+- **Where** are they important?
+
+- **How** are they important?
+
+- **When and how** are features linked with the prediction
+outcome?
+
+- **When and how strongly** do features interact with
+other features?]]]
+
+---
+
+## Vote probability matrix
+
+.pull-left[
+
+<img class="circle" src="img/newplot.png" width="500px" height="550px"/>
+
+
+]
+
+.pull-right[
+
+<iframe width="690" height="547" src="https://www.youtube.com/embed/XMQRb67gMYQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+]
+
+
+---
+class: inverse, middle, center
+
+ ## .yellow[Which] features are the most important? 
+
+ ## .yellow[Where] are they important?
+
+ ## .yellow[How] are they important?
+
+---
+
+## Global explanation of feature contribution
+
+Overall role of features in the choice of different forecast-model selection.
+
+
+
+- Permutation-based variable importance
+- Mean decrease in Gini coefficient
+- Partial dependence plots (Jerome H. Friedman, 2001)
+- Individual Conditional Expectation (ICE) curves (Goldstein et al.,2015; Zhao and Hastie, 2017)
+
+---
+class: inverse, middle, center
+
+##Partial dependence plots and ICE curves
+
+---
+background-image: url(img/p1.png)
+background-size: contain
+
+
+---
+background-image: url(img/p2.png)
+background-size: contain                                                 
+---
+background-image: url(img/p3.png)
+background-size: contain
+
+---
+background-image: url(img/p4.png)
+background-size: contain 
+
+---
+background-image: url(img/p6.png)
+background-size: contain
+
+---
+background-image: url(img/p7.png)
+background-size: contain
+
+---
+class: inverse, middle, center
+## Feature importance plot for yearly series
+
+---
+background-image: url(img/y1.png)
+background-size: contain
+
+
+---
+class: inverse, middle, center
+## Feature importance plot for quarterly series
+
+---
+background-image: url(img/q1.png)
+background-size: contain
+
+---
+class: inverse, middle, center
+
+## .yellow[When and how] are features linked with the prediction outcome?
+
+
+---
+#### Partial dependency plots for quarterly data: strength of seasonality
+
+```{r, fig.width=15, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+knitr::include_graphics("img/qseasonal.png")
+```
+
+---
+
+## Partial dependency plots for hourly data: entropy
+
+-  forecastability of a time series
+
+.pull-left[
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+knitr::include_graphics("img/entropy.png")
+```
+
+]
+
+.pull-right[
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+knitr::include_graphics("img/en_pdp4.png")
+```
+
+
+]
+
+
+---
+class: inverse, middle, center
+
+### .yellow[When and how strongly] do features interact with other features?
+                                                       
+---
+
+## Interaction effect
+
+- Friedman's H-statistic 
+
+    fraction of variance of two-variable partial dependency not captured by sum of the respective individual partial dependencies.
+    
+
+---
+
+Interaction between linearity and seasonal lag at seasonally-differenced series
+
+```{r, comment=NA, fig.width=15, echo=FALSE}
+knitr::include_graphics("img/htwopdp1-1.png")
+```
+
+
+
+
+---
+
+Interaction between linearity and seasonal lag at seasonally-differenced series
+
+```{r, comment=NA, fig.width=15, echo=FALSE}
+knitr::include_graphics("img/htwopdp3-1.png")
+```
+
+
+---
+class:  middle, inverse
+
+## Local interpretability
+
+---
+background-image: url(img/local1.png)
+background-size: contain
+
+---
+background-image: url(img/local2.png)
+background-size: contain
+
+
+---
+background-image: url(img/local3.png)
+background-size: contain
+
+---
+
+## Thank you
+
+.pull-left[
+
+
+<img class="circle" src="img/rob.jpeg" width="250px" height="300px"/>
+
+Professor Rob Hyndman
+
+Monash University
+
+]
+
+.pull-right[
+
+<img class="circle" src="img/george.jpeg" width="200px" height="300px"/>
+
+Professor George Athanasopoulos
+
+Monash University
+
+]
+
+---
+class: center, middle
+
+# Thank You!
+
+
+
+# email: ttalagala@sjp.ac.lk

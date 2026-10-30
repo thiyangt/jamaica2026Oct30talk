@@ -10,6 +10,8 @@
     <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
     <link href="libs/remark-css/duke-blue.css" rel="stylesheet" />
     <link href="libs/remark-css/hygge-duke.css" rel="stylesheet" />
+    <script src="libs/kePrint/kePrint.js"></script>
+    <link href="libs/lightable/lightable.css" rel="stylesheet" />
     <link rel="stylesheet" href="libs/cc-fonts.css" type="text/css" />
     <link rel="stylesheet" href="libs/figure-captions.css" type="text/css" />
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
@@ -215,51 +217,51 @@ class: center, top, inverse
 .full-width[.content-box-blue[Multiple products across many warehouses]]
 
 ---
-
-
-## Number of series: 1
+ Number of series: 1
 
 
 
 ![](index_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
 
 ---
-## Number of series: 2
+Number of series: 2
 
 ![](index_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
 
 
 ---
 
-## Number of series: 3
+ Number of series: 3
 
 ![](index_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
 
 ---
 
 
-## Number of series: 10
+ Number of series: 10
 
 ![](index_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
 
 ---
 
 
-## Number of series: More than 100
+ Number of series: More than 100
 
 ![](index_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
 
 ---
 
-# Two main factors 
+# Three main factors 
 
 1. Temporal Volume
 
 2. Temporal Depth
 
+3. Temporal Information
+
 ---
 
-# Two main factors 
+# Three main factors 
 
 1. Temporal Volume: measures **how much data we store**
 
@@ -268,7 +270,264 @@ class: center, top, inverse
 2. Temporal Depth: measures **how much of the underlying temporal behaviour and dynamics we retain**.
 
     How much temporal information is preserved within each time series, including its ability to capture short-term fluctuations, long-term trends, seasonality, periodicity, temporal dependencies, peaks, and structural changes.
+    
+3. Temporal Information: The **meaningful temporal characteristics and patterns contained in time-series** data that enable us to understand, analyse, and model its behaviour.
 
+
+---
+
+
+![](index_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+# Can you remember what we saw in the previous slide?
+
+
+---
+
+.pull-left[
+
+### Series A
+
+Increasing trend with a seasonal pattern and relatively smooth fluctuations.
+
+]
+
+
+.pull-right[
+
+### Series B
+
+Increasing trend with a seasonal pattern, but with additional short-term fluctuations, more noise and occasional extreme peaks.
+
+
+]
+
+
+---
+class: center, middle
+
+## From observations to mental fingerprints
+
+## How we mentally summarise a time series?
+
+---
+class: center, middle
+
+### Our brain does not memorise every observation.
+
+### It extracts meaningful characteristics and creates a mental representation.
+
+
+---
+
+## Mental Temporal Fingerprint
+
+&lt;table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Characteristic &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; What we capture &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Trend &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Increasing / Decreasing / Stable &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Seasonality &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Present / Absent; Weak / Strong &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Variability &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; High / Low &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Extreme events &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Present / Absent &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Periodicity &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 12 observations &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Noise &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; High / Low &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+## We do not remember every observation. We remember the characteristics that describe the behaviour of the time series.
+
+## **Can we teach computers to do the same?**
+
+---
+background-image: url(img/tukey.jpeg)
+background-size: 200px
+background-position: 100% 6%
+
+# Time series features
+
+- **Cognostics**: **Co**mputer-aided dia**gnostics** (John W. Tukey, 1985)
+
+- Characteristics of time series
+
+- Summary measures of time series
+
+
+**Basic Principle**
+
+- Transform a given time series `\(y=\{y_1, y_2, \cdots, y_n\}\)` into a feature vector `\(F = (f_1(y), f_2(y), \cdots, f_p(y))'\)`. 
+
+
+---
+
+.pull-left[
+#### Time-domain representation
+
+![](index_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+
+]
+
+--
+
+.pull-right[
+
+#### Time series features
+
+- Strength of trend
+
+
+- Strength of seasonality
+
+
+
+
+```
+# A tibble: 6 × 3
+  trend seasonality id   
+  &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;
+1 0.995       0     N0001
+2 0.591       0     N0633
+3 0.961       0     N0625
+4 0.178       0     N0645
+5 0.251       0.906 N1912
+6 0.968       0.927 N2012
+```
+
+]
+
+---
+
+.pull-left[
+
+
+![](index_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+
+
+]
+
+.pull-right[
+
+
+`$$y_t = T_t + S_t + R_t$$`
+
+`$$F_T = max \left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)} \right)$$`
+
+`$$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$`
+
+]
+
+---
+.pull-left[
+#### Time-domain representation
+
+![](index_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+
+]
+
+--
+
+.pull-right[
+
+#### Feature-domain representation
+
+![](index_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
+
+]
+---
+---
+
+.pull-left[
+
+
+![](index_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+
+
+]
+
+.pull-right[
+
+
+`$$y_t = T_t + S_t + R_t$$`
+
+`$$F_T = max \left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)} \right)$$`
+
+`$$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$`
+
+]
+
+
+---
+
+## Examples of time series features
+
+.pull-left[
+
+- length
+
+- strength of trend
+
+- strength of seasonality
+
+- lag-1 autocorrelation
+
+- spectral entropy
+
+- proportion of zeros
+
+- spikiness
+
+]
+
+.pull-right[
+
+- curvature
+
+- linearity
+
+- stability
+
+- number of peaks
+
+- parameter estimates of Holt-Winters' additive method
+
+- unit root test statistics
+
+]
+---
+
+## Which features to use? 
+
+The human brain does not extract every possible feature from everything it observes. It selectively attends to characteristics that are relevant to the task, context and previous experience.
+
+For time-series representation, we can develop a similar idea: **Task-aware and adaptive temporal feature extraction.**
+
+---
 ---
 class: center, middle
 

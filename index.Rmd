@@ -109,7 +109,7 @@ bananas
 
 .pull-right[
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA, fig.height=3}
 library(fable)
 bananas %>% 
   autoplot(Sales) 
@@ -149,7 +149,7 @@ bananas
 
 .pull-right[
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA, fig.height=3}
 library(fable)
 bananas %>% 
   autoplot(Sales) + geom_vline(xintercept = mth2, lwd=2, col="#e7298a")
@@ -164,7 +164,7 @@ bananas %>%
 
 .pull-left[
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA, fig.height=3}
 library(fable)
 bananas %>% 
   autoplot(Sales) + geom_vline(xintercept = mth2, lwd=2, col="#e7298a")
@@ -353,11 +353,9 @@ class: center, top, inverse
 .full-width[.content-box-blue[Multiple products across many warehouses]]
 
 ---
+ Number of series: 1
 
-
-## Number of series: 1
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, comment=NA, out.height="50%"}
 library(tidyverse)
 library(coronavirus)
 coronavirus <- coronavirus %>% mutate(cases = replace(cases, which(cases<0), NA))
@@ -376,7 +374,7 @@ p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + th
 ```
 
 ---
-## Number of series: 2
+Number of series: 2
 
 ```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
 library(plotly)
@@ -387,7 +385,7 @@ p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + ge
 
 ---
 
-## Number of series: 3
+ Number of series: 3
 
 ```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
 library(plotly)
@@ -399,7 +397,7 @@ p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + ge
 ---
 
 
-## Number of series: 10
+ Number of series: 10
 
 ```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
 library(plotly)
@@ -418,7 +416,7 @@ p + geom_line(data = subset(confirmed,  country == "Norway"),color = "red") + ge
 ---
 
 
-## Number of series: More than 100
+ Number of series: More than 100
 
 ```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
 library(plotly)
@@ -428,15 +426,17 @@ p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
 
 ---
 
-# Two main factors 
+# Three main factors 
 
 1. Temporal Volume
 
 2. Temporal Depth
 
+3. Temporal Information
+
 ---
 
-# Two main factors 
+# Three main factors 
 
 1. Temporal Volume: measures **how much data we store**
 
@@ -445,6 +445,425 @@ p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
 2. Temporal Depth: measures **how much of the underlying temporal behaviour and dynamics we retain**.
 
     How much temporal information is preserved within each time series, including its ability to capture short-term fluctuations, long-term trends, seasonality, periodicity, temporal dependencies, peaks, and structural changes.
+    
+3. Temporal Information: The **meaningful temporal characteristics and patterns contained in time-series** data that enable us to understand, analyse, and model its behaviour.
+
+
+---
+
+
+```{r, echo=FALSE, fig.width=15}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+set.seed(123)
+
+n <- 240
+t <- 1:n
+
+# Series A: Trend + seasonality
+series_A <- 0.03 * t +
+  5 * sin(2 * pi * t / 12) +
+  rnorm(n, 0, 0.8) + 200
+
+# Series B: Trend + seasonality + irregular behaviour
+series_B <- 0.02 * t +
+  5 * sin(3 * pi * t / 12) +
+  3 * sin(2 * pi * t / 3) +
+  rnorm(n, 0, 2) + 100
+
+# Add occasional peaks
+series_B[c(45, 90, 150, 200)] <-
+  series_B[c(45, 90, 150, 200)] + 100
+
+data <- data.frame(
+  time = t,
+  Series_A = series_A,
+  Series_B = series_B
+)
+
+data_long <- pivot_longer(
+  data,
+  -time,
+  names_to = "series",
+  values_to = "value"
+)
+
+ggplot(data_long, aes(time, value)) +
+  geom_line() +
+  facet_wrap(~series, scales = "free_y") +
+  theme_minimal()
+```
+
+---
+class: center, middle
+
+# Can you remember what we saw in the previous slide?
+
+
+---
+
+.pull-left[
+
+### Series A
+
+Increasing trend with a seasonal pattern and relatively smooth fluctuations.
+
+]
+
+
+.pull-right[
+
+### Series B
+
+Increasing trend with a seasonal pattern, but with additional short-term fluctuations, more noise and occasional extreme peaks.
+
+
+]
+
+
+---
+class: center, middle
+
+## From observations to mental fingerprints
+
+## How we mentally summarise a time series?
+
+---
+class: center, middle
+
+### Our brain does not memorise every observation.
+
+### It extracts meaningful characteristics and creates a mental representation.
+
+
+---
+
+## Mental Temporal Fingerprint
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(kableExtra)
+mental_fingerprint <- data.frame(
+  Characteristic = c(
+    "Trend",
+    "Seasonality",
+    "Variability",
+    "Extreme events",
+    "Periodicity",
+    "Noise"
+  ),
+  `What we capture` = c(
+    "Increasing / Decreasing / Stable",
+    "Present / Absent; Weak / Strong",
+    "High / Low",
+    "Present / Absent",
+    "12 observations",
+    "High / Low"
+  ),
+  check.names = FALSE
+)
+
+kable(
+  mental_fingerprint,
+  format = "html",
+  # caption = "Mental Temporal Fingerprint",
+  align = c("l", "l")
+) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+---
+## We do not remember every observation. We remember the characteristics that describe the behaviour of the time series.
+
+## **Can we teach computers to do the same?**
+
+---
+background-image: url(img/tukey.jpeg)
+background-size: 200px
+background-position: 100% 6%
+
+# Time series features
+
+- **Cognostics**: **Co**mputer-aided dia**gnostics** (John W. Tukey, 1985)
+
+- Characteristics of time series
+
+- Summary measures of time series
+
+
+**Basic Principle**
+
+- Transform a given time series $y=\{y_1, y_2, \cdots, y_n\}$ into a feature vector $F = (f_1(y), f_2(y), \cdots, f_p(y))'$. 
+
+
+---
+
+.pull-left[
+#### Time-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+model <- c("Random walk with drift", "NAIVE", "Random walk with drift", "NAIVE", "ETS", "SARIMA")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i], model[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+]
+
+--
+
+.pull-right[
+
+#### Time series features
+
+- Strength of trend
+
+
+- Strength of seasonality
+
+
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+df <- tsfeatures(six_series, c("stl_features")) %>%
+  select(trend, seasonal_strength) %>%
+  rename(seasonality = seasonal_strength) %>%
+  replace_na(list(seasonality = 0))
+df$id <- names(six_series)
+
+df
+
+```
+
+]
+
+---
+
+.pull-left[
+
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+
+]
+
+.pull-right[
+
+
+$$y_t = T_t + S_t + R_t$$
+
+$$F_T = max \left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)} \right)$$
+
+$$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$
+
+]
+
+---
+.pull-left[
+#### Time-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
+color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
+six_series <- lapply(M3[series_id], function(u){u$x})
+p <- lapply(six_series,
+function(u) {autoplot(u) + xlab("") + ylab("")}
+)
+for (i in seq_along(six_series))
+p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
+grid.arrange(grobs = p, ncol = 2)
+```
+
+]
+
+--
+
+.pull-right[
+
+#### Feature-domain representation
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+df <- tsfeatures(six_series, c("stl_features")) %>%
+  select(trend, seasonal_strength) %>%
+  rename(seasonality = seasonal_strength) %>%
+  replace_na(list(seasonality = 0))
+df$id <- names(six_series)
+ggplot(df, aes(x = trend, y = seasonality)) +
+  geom_point(size = 5, color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")) +
+  xlim(0, 1) + ylim(0, 1) +
+  xlab("Strength of trend") + 
+  ylab("Strength of seasonality") + 
+  coord_fixed() +
+  geom_text_repel(
+    aes(label = id),
+    colour = "black",
+    size = 5,
+    box.padding = unit(0.5, "lines")
+  ) +
+  theme(legend.position = "none")
+```
+
+]
+---
+---
+
+.pull-left[
+
+
+```{r, comment=NA, message=FALSE, warning=FALSE, echo=FALSE}
+library(Mcomp)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(png)
+library(tsfeatures)
+library(tidyverse)
+library(ggpubr)
+# Extract required series
+library(forecast)
+library(ggplot2)
+
+# Extract the time series
+x <- M3[["N1912"]]$x
+
+# STL decomposition
+fit <- stl(x, s.window = "periodic")
+
+# Plot STL decomposition
+autoplot(fit) +
+  theme_minimal() +
+  labs(
+    title = "STL Decomposition: M3 Series N1912",
+    x = "Time",
+    y = "Value"
+  )
+```
+
+
+]
+
+.pull-right[
+
+
+$$y_t = T_t + S_t + R_t$$
+
+$$F_T = max \left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)} \right)$$
+
+$$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$
+
+]
+
+
+---
+
+## Examples of time series features
+
+.pull-left[
+
+- length
+
+- strength of trend
+
+- strength of seasonality
+
+- lag-1 autocorrelation
+
+- spectral entropy
+
+- proportion of zeros
+
+- spikiness
+
+]
+
+.pull-right[
+
+- curvature
+
+- linearity
+
+- stability
+
+- number of peaks
+
+- parameter estimates of Holt-Winters' additive method
+
+- unit root test statistics
+
+]
+---
+
+## Which features to use? 
+
+- The human brain does not extract every possible feature from everything it observes. 
+
+- It selectively attends to characteristics that are relevant to the task, context and previous experience.
+
+- For time-series representation, we can develop a similar idea: **Task-aware and adaptive temporal feature extraction.**
+
+---
+
+# M4 Competition
+
+---
+
+## Features to detect structures
+
+
+
+
 
 ---
 class: center, middle

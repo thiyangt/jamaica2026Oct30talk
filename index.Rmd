@@ -187,7 +187,7 @@ bananas %>%
 ---
 
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -214,7 +214,7 @@ ggplot(df, aes(y=v2, x=v3)) +
 
 
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -238,7 +238,7 @@ ggplot(df, aes(y=v2, x=v3)) +
 
 ---
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -262,7 +262,7 @@ ggplot(df, aes(y=v2, x=v3)) +
 
 ---
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -286,7 +286,7 @@ ggplot(df, aes(y=v2, x=v3)) +
 
 ---
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -310,7 +310,7 @@ ggplot(df, aes(y=v2, x=v3)) +
 
 ---
 
-### What might happen during a typical model building process?
+#### What might happen during a typical model building process?
 
 ```{r, comment=NA, echo=FALSE, fig.width=15}
 library(ggplot2)
@@ -427,146 +427,6 @@ p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
 ```
 
 ---
-class: center, middle, inverse
-
-#How to forecast large number of univariate time series?
-
----
-
-## Aggregate selection rule
-
-```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
-library(plotly)
-p <- ggplot(confirmed, aes(x=date, y=cases)) + geom_line() +  theme(legend.position = "none")
-p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
-```
-
----
-
-## Individual model building
-
-```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
-library(plotly)
-p <- ggplot(confirmed, aes(x=date, y=cases, colour=country)) + geom_line() +  theme(legend.position = "none")
-p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
-```
-
----
-
-## Individual model building
-
-.pull-left[
-
-```{r, echo=FALSE, fig.width=15, fig.height=8, warning=FALSE, message=FALSE}
-library(plotly)
-p <- ggplot(confirmed, aes(x=date, y=cases, colour=country)) + geom_line() +  theme(legend.position = "none")
-p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
-```
-
-
-]
-
-
-
---
-
-.pull-right[
-
-
-```{r, comment=NA, echo=FALSE, fig.width=15}
-library(ggplot2)
-df <- data.frame(v1=factor(c("Data wrangling", 
-  "Data Visualization", 
-                                "Data Visualization", 
-                                "Data Preprocessing",
-                                "Data Visualization", 
-  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
-    
-                                
-                                ), levels=c("Data wrangling",
-                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
-
-ggplot(df, aes(y=v2, x=v3)) + 
-  geom_tile(aes(fill = v1)) + 
-  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#984ea3")) + 
-  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
-  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
-```
-
-
-]
-
-
---
-.full-width[.content-box-green[.justify-center[How to choose the right forecasting techniques?]]]
-
----
-
-
-class: inverse
-background-image: url(img/rice1.png)
-background-size: contain
-
-
-
-
----
-
-class: inverse
-background-image: url(img/rice2.png)
-background-size: contain
-
----
-
-#### Time series
-
-```{r, comment=NA,fig.width=15, message=FALSE, warning=FALSE, echo=FALSE}
-library(Mcomp)
-library(ggplot2)
-library(grid)
-library(gridExtra)
-library(ggrepel)
-library(png)
-library(tsfeatures)
-library(tidyverse)
-library(ggpubr)
-# Extract required series
-series_id <- c("N0001", "N0633", "N0625", "N0645","N1912", "N2012")
-color = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02")
-model <- c("Random walk with drift", "NAIVE", "Random walk", "NAIVE", "ETS", "SARIMA")
-six_series <- lapply(M3[series_id], function(u){u$x})
-p <- lapply(six_series,
-function(u) {autoplot(u) + xlab("") + ylab("")}
-)
-for (i in seq_along(six_series))
-p[[i]] <- p[[i]] +geom_line(color=color[i]) +ggtitle(series_id[i])+theme(title =element_text(size=10, face='bold'))
-grid.arrange(grobs = p, ncol = 3)
-```
-
----
-
-
-
-```{r, comment=NA, echo=FALSE, fig.width=15}
-library(ggplot2)
-df <- data.frame(v1=factor(c("Data wrangling", 
-  "Data Visualization", 
-                                "Data Visualization", 
-                                "Data Preprocessing",
-                                "Data Visualization", 
-  "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning", "Model fitting","Evaluating forecast accuracy", "Tunning", "Model fitting", "Evaluating forecast accuracy", "Tunning",  "Evaluation", "Data Visualization", "Communication"
-    
-                                
-                                ), levels=c("Data wrangling",
-                                            "Data Visualization", "Data Preprocessing", "Model fitting", "Tunning", "Evaluating forecast accuracy", "Evaluation", "Communication")), v2=rep(1, 23), v3=1:23)
-
-ggplot(df, aes(y=v2, x=v3)) + 
-  geom_tile(aes(fill = v1)) + 
-  scale_fill_manual(values= c("#a6cee3", "#fb9a99", "#ffff99", "black","#b2df8a", "red", "#377eb8", "#984ea3")) + 
-  scale_y_discrete(labels = NULL, breaks = NULL) + labs(y = "")+
-  theme(axis.text.x = element_text(angle = 270)) +  scale_x_discrete(labels = aes(v1)) + labs(x="") +  theme(legend.position="bottom", legend.title = element_blank())
-```
-
 
 ---
 class: center, middle

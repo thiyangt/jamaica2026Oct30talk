@@ -499,7 +499,7 @@ ggplot(data_long, aes(time, value)) +
 ---
 class: center, middle
 
-# Can you remember what we saw in the previous slide?
+## Can you remember what we saw in the previous slide?
 
 
 ---
@@ -756,7 +756,6 @@ ggplot(df, aes(x = trend, y = seasonality)) +
 
 ]
 ---
----
 
 .pull-left[
 
@@ -854,17 +853,376 @@ $$F_S = max \left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)} \right)$$
 - For time-series representation, we can develop a similar idea: **Task-aware and adaptive temporal feature extraction.**
 
 ---
+## M-competitions
 
-# M4 Competition
+The M-competitions are large-scale empirical forecasting competitions organized to evaluate forecasting methods on many real-world time series.
+
+| Competition | Year | Main focus |
+|:---|---:|:---|
+| **M1** | 1982 | First large-scale forecasting competition |
+| **M2** | 1993 | Forecasting across a wider range of applications |
+| **M3** | 2000 | 3,003 time series; major comparison of statistical methods |
+| **M4** | 2018 | 100,000 time series; statistical + machine-learning methods |
+| **M5** | 2020 | Walmart retail sales; hierarchical/grouped forecasting |
+| **M6** | 2022 | Financial forecasting |
+| **M7** | 2024 | Financial/economic forecasting |
 
 ---
 
-## Features to detect structures
+### M4 Competition Data
+
+```{r, echo=FALSE, fig.width=15}
+library(ggplot2)
+library(dplyr)
+
+set.seed(123)
+
+n <- 100
+t <- 1:n
+
+df <- bind_rows(
+  # Series 1: Level shift
+  data.frame(
+    time = t,
+    value = ifelse(t <= 50, 10, 20) + rnorm(n, 0, 0.3),
+    pattern = "Level shift"
+  ),
+
+  # Series 2: Zig-zag
+  data.frame(
+    time = t,
+    value = 10 + rep(c(-3, 3), length.out = n) +
+      rnorm(n, 0, 0.3),
+    pattern = "Zig-zag"
+  ),
+
+  # Series 3: Sinusoidal
+  data.frame(
+    time = t,
+    value = 10 + 4 * sin(2 * pi * t / 20) +
+      rnorm(n, 0, 0.3),
+    pattern = "Sinusoidal"
+  )
+)
+
+ggplot(df, aes(time, value)) +
+  geom_line(linewidth = 0.8, colour = "steelblue") +
+  facet_wrap(~pattern, ncol = 1, scales = "free_y") +
+  labs(x = "Time", y = "Value") +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    panel.grid.minor = element_blank()
+  )
+```
+
+---
+class: center, middle
+
+background-image: url(img/beads.png)
+background-size: contain
 
 
+---
+
+## Detect Time Series Unusal Structures
+
+1. Number of Large Jumps (`detect_jumps_all`): Counts the number of unusually large consecutive changes in a time series. A jump is identified when the **absolute difference between consecutive observations exceeds an automatically estimated threshold**, defined by the specified upper quantile (quant) of the absolute differences. 
 
 
+2. Zig-zag rate (`detect_zigzag`): Measures how frequently a time series changes direction between increasing and decreasing. It is calculated as the proportion of successive non-zero first differences that have opposite signs.
 
+    - Low value (close to 0): Few direction reversals; relatively smooth or consistent movement.
+    
+    - High value (close to 1): Frequent direction reversals; strong alternating or zig-zag behaviour.
+
+---
+
+Consider the time series:
+$$
+y = (1, 5, 2, 6, 3, 7, 4)
+$$
+
+Step 1. Calculate first differences
+$$
+\Delta y = (4,-3,4,-3,4,-3)
+$$
+
+Step 2. Identify directions
+- Positive (+): Increasing
+- Negative (−): Decreasing
+Direction sequence:
+$$
+(+,-,+,-,+,-)
+$$
+
+Step 3. Count direction reversals: Every change from positive to negative or negative to positive is a reversal. Here, there are 5 reversals.
+
+$$
+\text{Zig-Zag Rate} =
+\frac{\text{Number of direction reversals}}
+{\text{Number of successive direction comparisons}} = \frac{5}{6-1} = 1
+$$
+---
+
+Another example
+Consider:
+$$
+y = (1,2,3,4,5,6,7)
+$$
+
+Direction sequence:
+$$
+(+,+,+,+,+,+)
+$$
+
+There are zero reversals.
+$$
+\text{Zig-Zag Rate} = \frac{0}{5}=0
+$$
+---
+
+## 
+
+```{r, echo=FALSE}
+library(knitr)
+
+zigzag_interpretation <- data.frame(
+  `Zig-Zag Rate` = c(
+    "0.00",
+    "0.01–0.20",
+    "0.21–0.40",
+    "0.41–0.60",
+    "0.61–0.80",
+    "0.81–1.00"
+  ),
+  Interpretation = c(
+    "No direction reversals",
+    "Very low",
+    "Low",
+    "Moderate",
+    "High",
+    "Very high"
+  ),
+  `Temporal Behaviour` = c(
+    "Consistent directional movement",
+    "Mostly smooth movement",
+    "Occasional direction changes",
+    "Noticeable fluctuations",
+    "Frequent direction changes",
+    "Strong zig-zag or alternating behaviour"
+  )
+)
+
+kable(
+  zigzag_interpretation,
+  caption = "Interpretation of Zig-Zag Rate",
+  align = "ccc"
+)
+
+```
+
+---
+
+--- 
+
+### Other features
+
+`jump_score_sd`: The ratio of the maximum absolute difference to the
+standard deviation of first differences.  Measures the size of the largest absolute change relative to the standard deviation of absolute consecutive differences.
+
+`jump_score_mean`: The ratio of the maximum absolute difference to the
+mean of first differences.  Measures the size of the largest absolute change relative to the mean of absolute consecutive differences.
+
+`max_abs_diff`: Calculates the largest absolute difference between consecutive observations in a time series.
+
+`andomness_ratio_gam`: Measures the proportion of variation in a time series that remains unexplained after fitting a smooth nonlinear trend using a GAM.
+
+`sd_diff`: Calculates the standard deviation of consecutive differences.
+
+---
+
+# tsstructure package
+
+```{r, eval=FALSE}
+# install.packages("pak")
+pak::pak("thiyangt/tsstructure")
+library(tsstructure)
+```
+---
+
+```{r, echo=FALSE}
+# -----------------------------
+# 1. Generate 100 time series
+# -----------------------------
+n_series <- 100
+n_time <- 120
+time <- seq_len(n_time)
+
+zigzag_ids <- 1:8
+jump_ids   <- 9:16
+sine_ids   <- 17:24
+
+series_list <- vector("list", n_series)
+metadata <- data.frame(
+  series_id = sprintf("series_%03d", seq_len(n_series)),
+  pattern = character(n_series),
+  n = rep(n_time, n_series),
+  jump_position = rep(NA_integer_, n_series),
+  jump_size = rep(NA_real_, n_series)
+)
+
+for (i in seq_len(n_series)) {
+  level <- rnorm(1, mean = 20, sd = 5)
+  slope <- runif(1, min = -0.05, max = 0.08)
+  noise_sd <- runif(1, min = 0.8, max = 2.8)
+  noise <- rnorm(n_time, mean = 0, sd = noise_sd)
+  trend <- slope * time
+
+  if (i %in% zigzag_ids) {
+    # Strong alternating up/down movement
+    amplitude <- runif(1, 3, 6.5)
+    y <- level + trend + amplitude * (-1)^time + 0.4 * noise
+    metadata$pattern[i] <- "zigzag"
+
+  } else if (i %in% jump_ids) {
+    # One large sudden level shift
+    jump_at <- sample(30:90, 1)
+    jump_size <- sample(c(-1, 1), 1) * runif(1, 8, 18)
+    y <- level + trend + noise
+    y[(jump_at + 1):n_time] <- y[(jump_at + 1):n_time] + jump_size
+    metadata$pattern[i] <- "large_jump"
+    metadata$jump_position[i] <- jump_at + 1L
+    metadata$jump_size[i] <- jump_size
+
+  } else if (i %in% sine_ids) {
+    # Clear sinusoidal pattern
+    period <- runif(1, 18, 42)
+    amplitude <- runif(1, 4, 8)
+    phase <- runif(1, 0, 2 * pi)
+    y <- level + trend +
+      amplitude * sin(2 * pi * time / period + phase) +
+      0.4 * noise
+    metadata$pattern[i] <- "sine"
+
+  } else {
+    # Ordinary simulated series: trend + AR(1) noise;
+    # a subset has only weak seasonality.
+    phi <- runif(1, 0.1, 0.8)
+    innovations <- rnorm(n_time, 0, noise_sd)
+    ar_noise <- numeric(n_time)
+    ar_noise[1] <- innovations[1]
+
+    for (j in 2:n_time) {
+      ar_noise[j] <- phi * ar_noise[j - 1] + innovations[j]
+    }
+
+    y <- level + trend + ar_noise
+
+    if (runif(1) < 0.25) {
+      period <- runif(1, 20, 60)
+      weak_amplitude <- runif(1, 0.3, 1.5)
+      phase <- runif(1, 0, 2 * pi)
+      y <- y + weak_amplitude * sin(2 * pi * time / period + phase)
+    }
+
+    metadata$pattern[i] <- "normal"
+  }
+
+  series_list[[i]] <- as.numeric(y)
+}
+
+stopifnot(length(series_list) == 100)
+stopifnot(all(lengths(series_list) > 20))
+
+# Long-format data frame: one row per time point
+series_data <- data.frame(
+  series_id = rep(metadata$series_id, each = n_time),
+  time = rep(time, times = n_series),
+  value = unlist(series_list, use.names = FALSE)
+)
+feature_names <- c(
+  "max_abs_diff",
+  "sd_diff",
+  "jump_score_sd",
+  "detect_jumps_all",
+  "detect_zigzag",
+  "jump_score_mean",
+  "randomness_ratio_gam",
+  "randomness_ratio_loess"
+)
+```
+
+```{r}
+series_list
+```
+---
+
+## Computing with `tsstructure` Package
+
+```{r, message=FALSE, warning=FALSE}
+library(tsstructure)
+feature_df <- tsstruct(
+x =  series_list,
+features = c("max_abs_diff", "sd_diff", "jump_score_sd", 
+"detect_jumps_all", "detect_zigzag", "jump_score_mean", "randomness_ratio_gam",
+"randomness_ratio_loess"))
+X <- feature_df[, feature_names, drop = FALSE]
+X
+```
+
+---
+
+```{r}
+X
+```
+
+---
+
+## Principle Component Analysis
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# PCA cannot use missing/infinite values. Median-impute any such values.
+for (nm in names(X)) {
+  bad <- !is.finite(X[[nm]])
+  if (any(bad)) {
+    good_values <- X[[nm]][!bad]
+    replacement <- if (length(good_values)) median(good_values) else 0
+    X[[nm]][bad] <- replacement
+  }
+}
+
+# Remove features with zero variance before scaling.
+keep <- vapply(X, function(z) stats::sd(z) > 0, logical(1))
+if (sum(keep) < 2) stop("At least two non-constant features are needed for PCA.")
+
+pca_fit <- stats::prcomp(X[, keep, drop = FALSE],
+                         center = TRUE, scale. = TRUE)
+
+pca_scores <- data.frame(
+  series_id = metadata$series_id,
+  pattern = metadata$pattern,
+  PC1 = pca_fit$x[, 1],
+  PC2 = if (ncol(pca_fit$x) >= 2) pca_fit$x[, 2] else 0
+)
+pca_variance <- data.frame(
+  component = paste0("PC", seq_along(pca_fit$sdev)),
+  standard_deviation = pca_fit$sdev,
+  proportion_variance = pca_fit$sdev^2 / sum(pca_fit$sdev^2),
+  cumulative_variance = cumsum(pca_fit$sdev^2 / sum(pca_fit$sdev^2))
+)
+pca_variance
+```
+
+---
+
+## Scatterplot of PC1 vs PC2
+
+```{r, echo=FALSE, fig.height=5, fig.width=5}
+library(ggplot2)
+ggplot(pca_scores, aes(x=PC1, y=PC2, col=pattern)) + geom_point()
+```
 ---
 class: center, middle
 

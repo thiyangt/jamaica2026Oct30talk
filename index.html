@@ -2894,11 +2894,34 @@ X
 ![](index_files/figure-html/unnamed-chunk-34-1.png)&lt;!-- --&gt;
 
 ---
+# Move to shiny app
+
+---
+
+#### What if a time series contains a mixture of multiple temporal patterns?
+
+![](index_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+---
+class: center, middle
+
+### How can we identify, represent, and store multiple temporal behaviours within a single time series without losing its temporal information?
+
+---
+Instead of maintaining one prototype for an entire time series, maintain prototypes for individual windows.
+
+![](index_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+---
 
 ## Temporal Prototype Library	
 
 - A collection of learned representative prototypes
 
+---
+class: center, middle
+
+background-image: url(img/dictimeseries.png)
+background-size: contain
+class: center, top, inverse
 ---
 
 
@@ -2930,6 +2953,8 @@ Table: Components of a Temporal Pattern Library
 
 ---
 
+
+---
 
 class: center, middle
 
@@ -3010,13 +3035,27 @@ background-size: contain
 
 ## Publications
 
+Talagala, T. S., Hyndman, R. J., &amp; Athanasopoulos, G. (2023). Meta‐learning how to forecast time series. Journal of Forecasting, 42(6), 1476-1501.
+
+Montero-Manso, P., Athanasopoulos, G., Hyndman, R. J., &amp; Talagala, T. S. (2020). FFORMA: Feature-based forecast model averaging. International Journal of Forecasting, 36(1), 86-92.
+
+Talagala, T. S., Hyndman, R. J., &amp; Athanasopoulos, G. (2023). Meta‐learning how to forecast time series. Journal of Forecasting, 42(6), 1476-1501.
+
 ---
 ## Software
+
+tsstructure: [https://github.com/thiyangt/tsstructure](https://github.com/thiyangt/tsstructure)
+
+tsfeatures: [https://github.com/robjhyndman/tsfeatures](https://github.com/robjhyndman/tsfeatures)
+
+seer: [https://github.com/thiyangt/seer](https://github.com/thiyangt/seer)
+
 
 
 ---
 ## Other references
 
+feasts: [https://feasts.tidyverts.org](https://feasts.tidyverts.org)
 
 ---
 class: center, middle

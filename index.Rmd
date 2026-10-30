@@ -1227,11 +1227,134 @@ ggplot(pca_scores, aes(x=PC1, y=PC2, col=pattern)) + geom_point(size=3)
 ```
 
 ---
+# Move to shiny app
+
+---
+
+#### What if a time series contains a mixture of multiple temporal patterns?
+
+```{r, echo=FALSE}
+library(ggplot2)
+
+set.seed(123)
+
+n <- 180
+t <- 1:n
+
+# Level shift
+level <- ifelse(t <= 60, 10, 15)
+
+# Zig-zag pattern
+zigzag <- ifelse(t <= 60, 0,
+                 ifelse(t <= 120,
+                        rep(c(-2, 2), length.out = 60),
+                        0))
+
+# Sinusoidal pattern
+sinusoidal <- ifelse(
+  t > 120,
+  3 * sin(2 * pi * (t - 120) / 20),
+  0
+)
+
+# Small random noise
+noise <- rnorm(n, mean = 0, sd = 0.25)
+
+# Combined series
+y <- level + zigzag + sinusoidal + noise
+
+df <- data.frame(t, y)
+
+# Plot
+ggplot(df, aes(x = t, y = y)) +
+  geom_line(linewidth = 0.8, colour = "steelblue") +
+  labs(
+    title = "Time Series with Multiple Temporal Patterns",
+    subtitle = "Level shift, zig-zag pattern and sinusoidal pattern",
+    x = "Time",
+    y = "Value"
+  ) +
+  theme_minimal(base_size = 13)
+```
+---
+class: center, middle
+
+### How can we identify, represent, and store multiple temporal behaviours within a single time series without losing its temporal information?
+
+---
+Instead of maintaining one prototype for an entire time series, maintain prototypes for individual windows.
+
+```{r, echo=FALSE, fig.width=15}
+library(ggplot2)
+
+set.seed(123)
+
+# Generate time series
+n <- 180
+t <- 1:n
+
+y <- c(
+  10 + rnorm(60, 0, 0.3),
+  15 + rep(c(-2, 2), length.out = 60) + rnorm(60, 0, 0.3),
+  15 + 3 * sin(2 * pi * (1:60) / 20) + rnorm(60, 0, 0.3)
+)
+
+df <- data.frame(time = t, value = y)
+
+# Define windows
+window_size <- 30
+step_size <- 20
+
+windows <- data.frame(
+  start = seq(1, n - window_size + 1, by = step_size)
+)
+
+windows$end <- windows$start + window_size - 1
+windows$window <- paste0("W", seq_len(nrow(windows)))
+
+# Plot
+ggplot() +
+  geom_rect(
+    data = windows,
+    aes(
+      xmin = start, xmax = end,
+      ymin = -Inf, ymax = Inf,
+      fill = window
+    ),
+    alpha = 0.12
+  ) +
+  geom_line(
+    data = df,
+    aes(time, value),
+    colour = "steelblue",
+    linewidth = 0.8
+  ) +
+  geom_text(
+    data = windows,
+    aes(x = (start + end) / 2, y = Inf, label = window),
+    vjust = 1.5,
+    size = 3.5
+  ) +
+  labs(
+    title = "Window-based Time Series Feature Extraction",
+    x = "Time",
+    y = "Value"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+```
+---
 
 ## Temporal Prototype Library	
 
 - A collection of learned representative prototypes
 
+---
+class: center, middle
+
+background-image: url(img/dictimeseries.png)
+background-size: contain
+class: center, top, inverse
 ---
 
 ```{r, echo=FALSE}
@@ -1281,6 +1404,8 @@ kable(
 
 ---
 
+
+---
 
 class: center, middle
 
@@ -1361,13 +1486,27 @@ background-size: contain
 
 ## Publications
 
+Talagala, T. S., Hyndman, R. J., & Athanasopoulos, G. (2023). Meta‐learning how to forecast time series. Journal of Forecasting, 42(6), 1476-1501.
+
+Montero-Manso, P., Athanasopoulos, G., Hyndman, R. J., & Talagala, T. S. (2020). FFORMA: Feature-based forecast model averaging. International Journal of Forecasting, 36(1), 86-92.
+
+Talagala, T. S., Hyndman, R. J., & Athanasopoulos, G. (2023). Meta‐learning how to forecast time series. Journal of Forecasting, 42(6), 1476-1501.
+
 ---
 ## Software
+
+tsstructure: [https://github.com/thiyangt/tsstructure](https://github.com/thiyangt/tsstructure)
+
+tsfeatures: [https://github.com/robjhyndman/tsfeatures](https://github.com/robjhyndman/tsfeatures)
+
+seer: [https://github.com/thiyangt/seer](https://github.com/thiyangt/seer)
+
 
 
 ---
 ## Other references
 
+feasts: [https://feasts.tidyverts.org](https://feasts.tidyverts.org)
 
 ---
 class: center, middle

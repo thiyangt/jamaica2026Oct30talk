@@ -927,10 +927,10 @@ background-size: contain
 
 ## Detect Time Series Unusal Structures
 
-1. Number of Large Jumps (`detect_jumps_all`): Counts the number of unusually large consecutive changes in a time series. A jump is identified when the **absolute difference between consecutive observations exceeds an automatically estimated threshold**, defined by the specified upper quantile (quant) of the absolute differences. 
+**Number of Large Jumps** (`detect_jumps_all`): Counts the number of unusually large consecutive changes in a time series. A jump is identified when the **absolute difference between consecutive observations exceeds an automatically estimated threshold**, defined by the specified upper quantile (quant) of the absolute differences. 
 
 
-2. Zig-zag rate (`detect_zigzag`): Measures how frequently a time series changes direction between increasing and decreasing. It is calculated as the proportion of successive non-zero first differences that have opposite signs.
+**Zig-zag rate** (`detect_zigzag`): Measures how frequently a time series changes direction between increasing and decreasing. It is calculated as the proportion of successive non-zero first differences that have opposite signs.
 
     - Low value (close to 0): Few direction reversals; relatively smooth or consistent movement.
     

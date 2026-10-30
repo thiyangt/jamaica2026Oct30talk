@@ -1,0 +1,21 @@
+<style>
+  /* Main title */
+  .title-slide h1 {
+    font-size: 3.2rem;
+  }
+
+/* Subtitle */
+  .title-slide h2 {
+    font-size: 1.0rem;
+  }
+
+/* Author */
+  .title-slide .author {
+    font-size: 1.2rem;
+  }
+
+/* Date */
+  .title-slide .date {
+    font-size: 1rem;
+  }
+</style>

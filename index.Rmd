@@ -932,9 +932,9 @@ background-size: contain
 
 **Zig-zag rate** (`detect_zigzag`): Measures how frequently a time series changes direction between increasing and decreasing. It is calculated as the proportion of successive non-zero first differences that have opposite signs.
 
-    - Low value (close to 0): Few direction reversals; relatively smooth or consistent movement.
+   - Low value (close to 0): Few direction reversals; relatively smooth or consistent movement.
     
-    - High value (close to 1): Frequent direction reversals; strong alternating or zig-zag behaviour.
+  - High value (close to 1): Frequent direction reversals; strong alternating or zig-zag behaviour.
 
 ---
 
@@ -1409,7 +1409,7 @@ kable(
 
 class: center, middle
 
-# Feature-based time series forecasting
+### Feature-based time series forecasting
 
 
 ---

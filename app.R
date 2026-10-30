@@ -1,4 +1,4 @@
-
+library(readr)
 library(shiny)
 library(ggplot2)
 library(plotly)
@@ -6,7 +6,7 @@ library(dplyr)
 
 # pca_scores: series_id, pattern, PC1, PC2
 # series_list: list of numeric time series
-paca_scores <- read_csv("pca_Scores.csv")
+pca_scores <- read_csv("pca_scores.csv")
 series_list <- readRDS("series_list.rds")
 
 # Match each point to its series using row order

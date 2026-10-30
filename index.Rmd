@@ -1052,6 +1052,7 @@ library(tsstructure)
 ---
 
 ```{r, echo=FALSE}
+set.seed(123)
 # -----------------------------
 # 1. Generate 100 time series
 # -----------------------------
@@ -1219,8 +1220,9 @@ pca_variance
 
 ## Scatterplot of PC1 vs PC2
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(ggplot2)
+#pca_scores <- read_csv("pca_Scores.csv")
 ggplot(pca_scores, aes(x=PC1, y=PC2, col=pattern)) + geom_point(size=3)
 ```
 

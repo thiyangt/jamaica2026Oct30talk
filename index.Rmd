@@ -428,6 +428,24 @@ p + theme(legend.position = "none") + ylim(c(0, 800)) + ylab("Sales")
 
 ---
 
+# Two main factors 
+
+1. Temporal Volume
+
+2. Temporal Depth
+
+---
+
+# Two main factors 
+
+1. Temporal Volume: measures **how much data we store**
+
+    Refers to the quantity of time-series data stored, determined by the number of time series and the number of observations (data points) in each series.
+
+2. Temporal Depth: measures **how much of the underlying temporal behaviour and dynamics we retain**.
+
+    How much temporal information is preserved within each time series, including its ability to capture short-term fluctuations, long-term trends, seasonality, periodicity, temporal dependencies, peaks, and structural changes.
+
 ---
 class: center, middle
 

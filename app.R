@@ -7,7 +7,7 @@ library(dplyr)
 # pca_scores: series_id, pattern, PC1, PC2
 # series_list: list of numeric time series
 paca_scores <- read_csv("pca_Scores.csv")
-series_list <- readRDS("~/jamaica2026Oct30talk/series_list.rds")
+series_list <- readRDS("series_list.rds")
 
 # Match each point to its series using row order
 pca_scores <- as.data.frame(pca_scores)
